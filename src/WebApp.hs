@@ -13,9 +13,9 @@ import           Database.PostgreSQL.Simple (Connection)
 import           Network.Wai                (Application)
 import Network.HTTP.Types (status404)
 import qualified Web.Scotty                 as S
+import Data.Scientific (fromFloatDigits, toBoundedRealFloat)
 
 import           Queries
-import Data.Scientific (fromFloatDigits)
 
 app' :: Connection -> S.ScottyM ()
 app' conn = do
@@ -28,7 +28,7 @@ app' conn = do
       Nothing -> do 
         S.status status404
         S.text "404 Not Found"
-      Just x -> S.json $ object $ map (\(currency, balance) -> currency .= Number (fromFloatDigits balance)) x
+      Just x -> S.json $ object $ map (\(currency, balance) -> currency .= Number balance) x
 
 app :: Connection -> IO Application
 app conn = S.scottyApp $ app' conn
