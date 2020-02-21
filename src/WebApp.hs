@@ -33,5 +33,5 @@ app' conn = do
 app :: Connection -> IO Application
 app conn = S.scottyApp $ app' conn
 
-runApp :: Connection -> IO ()
-runApp conn = S.scotty 8080 $ app' conn
+runApp :: Int -> Connection -> IO ()
+runApp port conn = S.scotty port $ app' conn

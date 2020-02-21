@@ -1,10 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
-import Database.PostgreSQL.Simple (connectPostgreSQL, defaultConnectInfo, ConnectInfo(..))
-import           WebApp (runApp)
+import           Data.ByteString.Char8      (pack)
+import           Data.Maybe                 (fromMaybe)
+import           Database.PostgreSQL.Simple (ConnectInfo (..),
+                                             connectPostgreSQL,
+                                             defaultConnectInfo)
+import           System.Environment         (getEnv, lookupEnv)
+import           Text.Read                  (readMaybe)
+
+import           WebApp                     (runApp)
 
 main :: IO ()
 main = do
-  conn <- connectPostgreSQL "postgres:///cweb_exchange"
-  runApp conn
+  port <- fromMaybe "3000" <$> lookupEnv "PORT"
+  pgURI <- fromMaybe "postgres:///cweb_exchange" <$> lookupEnv "DATABASE_URL"
+  conn <- connectPostgreSQL $ pack pgURI
+  runApp (read port) conn
