@@ -4,11 +4,11 @@ module Main where
 
 import           Data.ByteString.Char8            (pack)
 import           Data.Maybe                       (fromMaybe)
-import           Database.PostgreSQL.Simple
+import           Database.PostgreSQL.Simple       (connectPostgreSQL)
 import           Database.PostgreSQL.Simple.SqlQQ (sql)
 import           System.Environment               (lookupEnv)
 
-import           Model                            (User (..))
+import           Model
 import           Queries
 
 main :: IO ()
