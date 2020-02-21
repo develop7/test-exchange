@@ -6,5 +6,5 @@ import           WebApp (runApp)
 
 main :: IO ()
 main = do
-  conn <- connectPostgreSQL "dbname=cweb_exchange"
+  conn <- connectPostgreSQL "postgres:///cweb_exchange"
   runApp conn

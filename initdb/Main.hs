@@ -10,7 +10,7 @@ import           Queries
 
 main :: IO ()
 main = do
-  conn <- connectPostgreSQL "dbname=cweb_exchange"
+  conn <- connectPostgreSQL "postgres:///cweb_exchange"
   
   dropUsers conn 
   createUsers conn
