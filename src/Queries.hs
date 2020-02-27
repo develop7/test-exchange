@@ -1,14 +1,16 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes       #-}
-{-# LANGUAGE RecordWildCards   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE QuasiQuotes         #-}
+{-# LANGUAGE RecordWildCards     #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Queries where
 
+import           Data.Scientific                  (Scientific)
 import           Data.Text                        (Text, unpack)
-import           Database.PostgreSQL.Simple       (Connection, execute,
-                                                   fromOnly, query)
+import           Database.PostgreSQL.Simple       (Connection, Only (..),
+                                                   execute, fromOnly, query,
+                                                   returning)
 import           Database.PostgreSQL.Simple.SqlQQ (sql)
-import Data.Scientific (Scientific)
 
 import           Model
 
@@ -27,23 +29,66 @@ createUsers conn = do
   _ <-
     execute
       conn
-      [sql| CREATE TABLE "users" (
-    "handle"      TEXT PRIMARY KEY,
-    "balance_eur" NUMERIC,
-    "balance_usd" NUMERIC); |]
+      [sql| CREATE TABLE users
+            (
+                id          SERIAL NOT NULL
+                    CONSTRAINT users_pk
+                        PRIMARY KEY,
+                handle      TEXT   NOT NULL,
+                balance_eur NUMERIC,
+                balance_usd NUMERIC
+            );
+ |]
       ()
   pure ()
-  
+
+createOrders :: Connection -> IO ()
+createOrders conn = do
+  _ <-
+    execute
+      conn
+      [sql|
+CREATE TABLE orders
+(
+    id        SERIAL            NOT NULL
+        CONSTRAINT orders_pk
+            PRIMARY KEY,
+    user_id   INTEGER
+        CONSTRAINT orders_users_id_fk
+            REFERENCES users
+            ON UPDATE CASCADE ON DELETE SET NULL,
+    operation TEXT,
+    asset     TEXT,
+    amount    NUMERIC,
+    price     NUMERIC
+);    |]
+      ()
+  pure ()
+
 dropUsers :: Connection -> IO ()
-dropUsers conn = do 
+dropUsers conn = do
   _ <- execute conn [sql|DROP TABLE IF EXISTS "users" |] ()
   return ()
 
-addUser :: Connection -> User -> IO ()
+dropOrders :: Connection -> IO ()
+dropOrders conn = do
+  _ <- execute conn [sql|DROP TABLE IF EXISTS "orders" |] ()
+  return ()
+
+addUser :: Connection -> User -> IO Int
 addUser conn User {..} = do
-  r <-
+  r :: [Only Int] <-
+    query
+      conn
+      [sql|INSERT INTO "users" (handle, balance_eur, balance_usd) VALUES (?, ?, ?) RETURNING id|]
+      (handle, balanceEUR, balanceUSD)
+  return $ fromOnly . head $ r
+
+addOrder :: Connection -> Int -> Order -> IO ()
+addOrder conn user_id LimitOrder {..} = do
+  _ <-
     execute
       conn
-      [sql|INSERT INTO "users" (handle, balance_eur, balance_usd) VALUES (?, ?, ?)|]
-      (handle, balanceEUR, balanceUSD)
+      [sql|INSERT INTO "orders" (user_id, operation, asset, amount, price) VALUES (?, ?, ?, ?, ?)|]
+      (user_id, op, asset, amount, price)
   pure ()

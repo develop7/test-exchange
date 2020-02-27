@@ -1,14 +1,77 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
+
 module Model where
 
-import Data.Text (Text)
-import Database.PostgreSQL.Simple.FromField (fromField)
-import Database.PostgreSQL.Simple.FromRow (FromRow, fromRow, field)
-import Data.Scientific (Scientific)
+import           Control.Monad                        (mzero)
+import           Data.Aeson.Types                     (FromJSON, ToJSON)
+import           Data.ByteString.Char8                (pack)
+import           Data.Scientific                      (Scientific)
+import           Data.Text                            (Text)
+import           Database.PostgreSQL.Simple.FromField (FromField, fromField)
+import           Database.PostgreSQL.Simple.FromRow   (FromRow, field, fromRow)
+import           Database.PostgreSQL.Simple.ToField   (Action (..), ToField,
+                                                       toField)
+import           GHC.Generics
 
-data User = User {handle :: Text, balanceEUR, balanceUSD :: Scientific}
+data Operation
+  = Buy
+  | Sell
+  deriving (Generic, Show)
 
-instance FromRow User where
-  fromRow = User <$> field <*> field <*> field
-  
---instance FromField User where
---  fromField
+instance FromField Operation where
+  fromField f mdata = do
+    x <- fromField f mdata
+    case x of
+      "buy"  -> return Buy
+      "sell" -> return Sell
+      _      -> mzero
+
+instance ToField Operation where
+  toField Buy  = Escape $ pack "buy"
+  toField Sell = Escape $ pack "sell"
+
+instance FromJSON Operation
+
+instance ToJSON Operation
+
+data Asset
+  = USD
+  | EUR
+  deriving (Generic, Show)
+
+instance FromField Asset where
+  fromField f mdata = do
+    x <- fromField f mdata
+    case x of
+      "usd" -> return USD
+      "eur" -> return EUR
+      _     -> mzero
+
+instance ToField Asset where
+  toField USD = Escape $ pack "usd"
+  toField EUR = Escape $ pack "eur"
+
+instance FromJSON Asset
+
+instance ToJSON Asset
+
+data Order =
+  LimitOrder
+    { op    :: Operation
+    , asset :: Asset
+    , amount
+    , price :: Scientific
+    }
+  deriving (Generic, Show, FromRow)
+
+instance FromJSON Order
+
+instance ToJSON Order
+
+data User =
+  User
+    { handle                 :: Text
+    , balanceEUR, balanceUSD :: Scientific
+    }
+  deriving (Generic, Show, Eq, FromRow)

@@ -20,6 +20,7 @@ library
                      , Queries
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , bytestring
                      , http-types
                      , postgresql-simple
                      , postgresql-simple-url
