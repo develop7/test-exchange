@@ -1,3 +1,6 @@
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE DeriveAnyClass      #-}
+{-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -6,16 +9,25 @@ module WebApp
   ) where
 
 import           Control.Monad.IO.Class     (liftIO)
-import           Data.Aeson                 (Value (..), object, (.=))
+import           Data.Aeson                 (FromJSON, ToJSON, Value (..),
+                                             object, (.=))
 import           Data.Scientific            (Scientific)
-import           Data.Text                  (Text, pack)
 import           Database.PostgreSQL.Simple (Connection)
+import           GHC.Generics
 import           Network.HTTP.Types         (status404)
-import           Network.Wai                (Application)
 import qualified Web.Scotty                 as S
 
 import           Model
 import           Queries
+
+data OrderReq =
+  OrderReq
+    { username      :: String
+    , op            :: Operation
+    , asset         :: Asset
+    , amount, price :: Scientific
+    }
+  deriving (Generic, Show, Eq, FromJSON, ToJSON)
 
 app' :: Connection -> S.ScottyM ()
 app' conn = do
@@ -26,9 +38,9 @@ app' conn = do
       Nothing -> do
         S.status status404
         S.text "404 Not Found"
-      Just x -> S.json $ object $ map (\(currency, balance) -> currency .= Number balance) x
+      Just x -> S.json $ object $ map (\(currency, blnc) -> currency .= Number blnc) x
   S.post "/order" $ do
-    wat :: Order <- S.jsonData
+    wat :: OrderReq <- S.jsonData
     S.text "yep"
 
 runApp :: Int -> Connection -> IO ()

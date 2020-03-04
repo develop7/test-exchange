@@ -6,7 +6,6 @@ import           Data.ByteString.Char8      (pack)
 import           Data.Maybe                 (fromMaybe)
 import           Database.PostgreSQL.Simple (connectPostgreSQL)
 import           System.Environment         (lookupEnv)
-import           Text.Read                  (readMaybe)
 
 import           WebApp                     (runApp)
 

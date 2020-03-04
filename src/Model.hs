@@ -8,8 +8,9 @@ import           Data.Aeson.Types                     (FromJSON, ToJSON)
 import           Data.ByteString.Char8                (pack)
 import           Data.Scientific                      (Scientific)
 import           Data.Text                            (Text)
+import           Data.Time.Clock                      (UTCTime)
 import           Database.PostgreSQL.Simple.FromField (FromField, fromField)
-import           Database.PostgreSQL.Simple.FromRow   (FromRow, field, fromRow)
+import           Database.PostgreSQL.Simple.FromRow   (FromRow)
 import           Database.PostgreSQL.Simple.ToField   (Action (..), ToField,
                                                        toField)
 import           GHC.Generics
@@ -17,7 +18,7 @@ import           GHC.Generics
 data Operation
   = Buy
   | Sell
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance FromField Operation where
   fromField f mdata = do
@@ -38,7 +39,7 @@ instance ToJSON Operation
 data Asset
   = USD
   | EUR
-  deriving (Generic, Show)
+  deriving (Generic, Show, Eq)
 
 instance FromField Asset where
   fromField f mdata = do
@@ -58,12 +59,13 @@ instance ToJSON Asset
 
 data Order =
   LimitOrder
-    { op    :: Operation
-    , asset :: Asset
-    , amount
-    , price :: Scientific
+    { op            :: Operation
+    , asset         :: Asset
+    , amount, price :: Scientific
+    , isCompleted   :: Bool
+    , createdAt     :: UTCTime
     }
-  deriving (Generic, Show, FromRow)
+  deriving (Generic, Show, Eq, FromRow)
 
 instance FromJSON Order
 
