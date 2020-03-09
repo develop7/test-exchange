@@ -93,6 +93,9 @@ addOrder conn user_id LimitOrder {..} = do
   _ <-
     execute
       conn
-      [sql|INSERT INTO "orders" (user_id, operation, asset, amount, price, is_completed, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)|]
+      [sql|
+INSERT INTO "orders" (user_id, operation, asset, amount, price, is_complete, created_at)
+VALUES (?, ?, ?, ?, ?, ?, ?)
+      |]
       (user_id, op, asset, amount, price, isCompleted, createdAt)
   pure ()
